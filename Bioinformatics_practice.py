@@ -170,3 +170,78 @@ def longest_common_substring(strings):
     return("No common substring")
 
 print(longest_common_substring(strings))
+
+#%%
+##  Finding ORFs (Open Reading Frames)
+
+f = "C:/Users/JiwoonPark/Downloads/RNA codon table.txt"
+
+RNA_codon_str = ''
+with open(f) as file:
+    RNA_codon_str = ",".join(entry for line in file 
+                          for entry in line.replace("\t", " ").strip().split(" ")
+                          if entry)
+RNA_codon_list = RNA_codon_str.split(',')
+RNA_codon = dict(zip(RNA_codon_list[::2], RNA_codon_list[1::2]))
+
+DNA_string = str(input("Enter DNA string: "))
+
+complement = {'A':'T', 'T':'A', 'C':'G', 'G':'C'}
+DNA_string_comp = ("".join(complement[i] for i in DNA_string))
+DNA_string_comp_rev = DNA_string_comp[::-1]
+
+RNA_string = DNA_string.replace("T", "U")
+RNA_string_comp_rev = DNA_string_comp_rev.replace("T", "U")
+
+def translate_rna(RNA_str):
+    protein_str = []
+    
+    for shift in range(3):  
+        i = shift
+
+        while i < len(RNA_str) - 2:
+            if RNA_str[i:i+3] == "AUG": 
+                protein_seq = ""
+                stop_codon = False
+                for j in range(i, len(RNA_str) - 2, 3):
+                    codon = RNA_str[j:j+3]
+                    amino_acid = RNA_codon.get(codon, None)
+                    if amino_acid == "Stop": 
+                        stop_codon = True
+                        break
+                    if amino_acid is None: break
+                    protein_seq += amino_acid        
+                if stop_codon and protein_seq:
+                    protein_str.append(protein_seq)
+            i += 3
+            
+    return(protein_str)
+
+all_strings = translate_rna(RNA_string) + translate_rna(RNA_string_comp_rev)
+print("\n".join(set(all_strings)))
+
+
+#%%
+## RNA splicing and translation
+
+from Bio import SeqIO
+
+f = "sequences.txt"
+seq_dict = {}
+for entry in SeqIO.parse(f, "fasta"):
+    seq_dict[entry.id] = str(entry.seq)
+strings = list(seq_dict.values())
+
+DNA_string, introns = strings[0], strings[1:]
+
+for i in range(len(introns)):
+    DNA_string = DNA_string.replace(introns[i], "")
+
+RNA_string = DNA_string.replace("T", "U")
+
+protein_str = ''
+for i in range(0, len(RNA_string) - (len(RNA_string)%3),3):
+    if RNA_codon[RNA_string[i:i+3]] == "Stop" : break
+    protein_str += RNA_codon[RNA_string[i:i+3]]
+    
+print(protein_str)
