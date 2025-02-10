@@ -66,7 +66,7 @@ max_GC_content = GC_content[max_GC_id]
 print(max_GC_id, max_GC_content)
 
 #%%
-## Couting nucleotide differences
+## Counting nucleotide differences
 
 f = "sequence.txt"
 with open(f) as file:
@@ -245,3 +245,64 @@ for i in range(0, len(RNA_string) - (len(RNA_string)%3),3):
     protein_str += RNA_codon[RNA_string[i:i+3]]
     
 print(protein_str)
+
+
+#%%
+## Finding a shared spliced motif 
+
+seq1, seq2 = [str(x) for x in input("Enter DNA strings 1 and 2: ").split()]
+
+def longest_motif(x, y):
+    seq_matrix = [["" for _ in range(len(y)+1)] for _ in range(len(x) + 1)]
+    
+    for i in range(1, len(x) + 1):
+        for j in range(1, len(y) + 1):
+            if x[i-1] == y[j-1]: 
+                seq_matrix[i][j] = seq_matrix[i-1][j-1] + x[i-1]
+            else: 
+                seq_matrix[i][j] = max(seq_matrix[i-1][j], seq_matrix[i][j-1], key = len)
+                
+    return seq_matrix[len(x)][len(y)]
+
+print(longest_motif(seq1, seq2))
+
+
+#%%
+## Identifying reverse palindromes
+
+DNA_string = str(input("Enter DNA string: "))
+
+complement = {'A':'T', 'T':'A', 'C':'G', 'G':'C'}
+
+def rev_comp(DNA_str):
+    return("".join(complement[i] for i in reversed(DNA_str)))
+
+DNA_substring, DNA_substring_rev_comp, pos_length = [], [], []
+
+for j in (range(4,13,2)):
+    for i in range(len(DNA_string)-(j-1)):
+        DNA_substring.append(DNA_string[i:i+j])
+        DNA_substring_rev_comp.append(rev_comp(DNA_substring[-1]))
+        if DNA_substring[-1] == DNA_substring_rev_comp[-1]: 
+            pos_length.append((i+1, j))
+    
+print("\n".join(f"{x} {y}" for x, y in pos_length))
+
+
+#%%
+# Calculating transition/transversion ratio
+
+seq1, seq2 = [str(x) for x in input("Enter DNA strings 1 and 2: ").split()]
+transit_count = 0
+transver_count = 0
+
+transit_dict = [("A","G"), ("G","A"), ("T","C"), ("C","T")]
+transver_dict = [("A","C"), ("C","A"), ("A","T"), ("T","A"), ("T","G"), ("G","T"), ("G","C"), ("C","G")]
+
+for i in range(0, len(seq1)):
+    if len(seq1) != len(seq2): break
+    for seq in zip(seq1, seq2):
+        if seq in transit_dict: transit_count += 1
+        if seq in transver_dict: transver_count += 1
+        
+print(transit_count/transver_count)
